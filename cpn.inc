@@ -1,23 +1,27 @@
 /*
     Custom Player Nametags
-    ----- by Nyzenic, edited by Bork -----
+    ----- by Nyzenic, edited by Akenno -----
     https://www.burgershot.gg/showthread.php?tid=113
 */
 
 #include <a_samp>
 #include <streamer>
 #include <YSI\y_hooks>
- 
-#define NT_DISTANCE 25.0 // Nametag render distance
+#include <foreach> 
+
+
+#define NT_DISTANCE          25.0
+#define NT_UPDATE            500
+
+
  
 new Text3D:cNametag[MAX_PLAYERS];
  
 hook OnGameModeInit()
 {
     ShowNameTags(0);
-    print("--- Custom nametags by Nyzenic loaded. Edited by Bork ---");
-    // OnPlayerUpdate causes lag and OnPlayer(Take/Give)Damage doesn't work with it
-    SetTimer("UpdateNametag", 1000, true); // So we're using a timer, change the interval to what you want
+    print("--- Custom nametags by Nyzenic loaded. Edited by Akenno ---");
+    SetTimer("UpdateNametag", NT_UPDATE, true);
     return 1;
 }
 
@@ -89,7 +93,7 @@ static GetArmorDots(playerid)
  
 hook OnPlayerConnect(playerid)
 {
-    cNametag[playerid] = CreateDynamic3DTextLabel("Loading nametag...", 0xFFFFFFFF, 0.0, 0.0, 0.1, NT_DISTANCE, .attachedplayer = playerid, .testlos = 1);
+    cNametag[playerid] = CreateDynamic3DTextLabel("(Loading Nametag)", 0xFFFFFFFF, 0.0, 0.0, 0.1, NT_DISTANCE, .attachedplayer = playerid, .testlos = 1);
     return 1;
 }
 
@@ -103,22 +107,23 @@ hook OnPlayerDisconnect(playerid, reason)
 forward UpdateNametag();
 public UpdateNametag()
 {
-    for(new i = 0, j = GetPlayerPoolSize(); i <= j; i++)
+    foreach(new i : Player)
     {
-        if(IsPlayerConnected(i))
+        if(IsPlayerConnected(i)) 
         {
-            new nametag[128], playername[MAX_PLAYER_NAME], Float:armour;
+            new
+                name[128],
+                playername[MAX_PLAYER_NAME],
+                Float: armour
+            ;
+
             GetPlayerArmour(i, armour);
             GetPlayerName(i, playername, sizeof(playername));
-            if(armour > 1.0)
-            {
-                format(nametag, sizeof(nametag), "{%06x}%s {FFFFFF}(%i)\n{FFFFFF}%s\n{FF0000}%s", GetPlayerColor(i) >>> 8, playername, i, GetArmorDots(i), GetHealthDots(i));
-            }
-            else
-            {
-                format(nametag, sizeof(nametag), "{%06x}%s {FFFFFF}(%i)\n{FF0000}%s", GetPlayerColor(i) >>> 8, playername, i, GetHealthDots(i));
-            }
-            UpdateDynamic3DTextLabelText(cNametag[i], 0xFFFFFFFF, nametag);
+            
+            if(armour > 1.0) format(name, sizeof name, "{%06x}%s {FFFFFF}(%i)\n{FFFFFF}%s\n{FF0000}%s", GetPlayerColor(i) >>> 8, playername, i, GetArmorDots(i), GetHealthDots(i));
+            else format(name, sizeof name, "{%06x}%s {FFFFFF}(%i)\n{FF0000}%s", GetPlayerColor(i) >>> 8, playername, i, GetHealthDots(i));
+
+            UpdateDynamic3DTextLabelText(cNametag[i], 0xFFFFFFFF, name);
         }
     }
 }
